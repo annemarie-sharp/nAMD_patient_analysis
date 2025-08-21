@@ -1,0 +1,125 @@
+---
+title: "Exploring Age-related Macular Degeneration Patient Characteristics (Moorfields Eye Hospital)"
+author: "Anne-Marie Sharp"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                       message = FALSE, # do not show  messages in the output 
+                       warning = FALSE, # do not show warnings in the output
+                      error = FALSE     # hide error messages from output
+                     )
+```
+
+```{r install-packages, eval= FALSE}
+# Required packages (install if not already installed)
+install.packages("eyedata")
+install.packages("ggplot2")
+install.packages("dplyr")
+```
+
+```{r load-libraries}
+library(eyedata)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r clean-data}
+# load amd2 data and view
+data(amd2)
+head(amd2)
+colSums(is.na(amd2))
+
+# remove rows with missing va values
+amd2_clean <- amd2 %>% filter(!is.na(va))
+# Check the difference
+nrow(amd2)        
+nrow(amd2_clean)
+
+# rename columns to clearer names for readability
+amd2_clean <- amd2_clean %>%
+  rename(
+    baseline_age = age0,
+    visual_acuity = va,
+    patient_id = patID,
+    injection_number = inj_no
+     )
+head(amd2_clean)
+```
+
+```{r create-sex-bar-plot}
+# Count unique patients by sex
+unique_by_sex <- amd2_clean %>%
+  group_by(sex) %>%
+  summarise(unique_patient_id = n_distinct(patient_id))
+
+# Create bar plot
+ggplot(unique_by_sex, aes(x = sex, y = unique_patient_id, fill=sex)) + 
+  geom_col() +
+  labs (
+    title = "Sex Distribution of Age-related Macular Degeneration Patients",
+    x = "Sex",
+    y = "Number of Patients"
+  ) +
+  scale_x_discrete(labels = c("f" = "Female", "m" = "Male")) +
+  scale_fill_manual(
+    values = c("f" = "lightcoral", "m" = "lightblue"),
+    labels = c("f" = "Female", "m" = "Male"),
+    guide = "none") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+       
+
+```{r create-age-bar-plot}
+distinct_age <- amd2_clean %>%
+  distinct(patient_id, .keep_all = TRUE) %>%   # Reduce to one record per patient (since dataset is visit-level)
+  count(baseline_age)                             
+
+summary(amd2_clean$baseline_age) 
+
+distinct_age <- distinct_age %>%
+  mutate(age_group = cut(
+    baseline_age,
+    breaks = c(60, 70, 80, 90, 100),   
+    labels = c("60–69", "70–79", "80–89", "90–99"),
+    right = FALSE                      
+  ))
+
+
+distinct_age %>%
+  group_by(age_group) %>%
+  summarise(total_patients = sum(n), .groups = "drop") %>%
+  ggplot(aes(x = age_group, y = total_patients)) +
+  geom_col() +
+  labs(
+     title = "Age Group Distribution of Age-related Macular Degeneration Patients",
+    x = "Age Group", y = "Number of Patients") +
+  theme_classic()
+```
+
+```{r create-visual_acuity-boxplot}
+# VA distribution by age group
+amd2_clean %>%
+  mutate(
+    age_group = cut(
+      baseline_age,
+      breaks = c(60, 70, 80, 90, 100),
+      labels = c("60–69", "70–79", "80–89", "90–99"),
+      right = FALSE
+    )
+  ) %>%
+  filter(!is.na(visual_acuity), !is.na(age_group)) %>%
+  ggplot(aes(x = age_group, y = visual_acuity)) +
+  geom_boxplot(outlier.alpha = 0.5, fill = "lightgray") +
+  labs(
+    title = "Visual Acuity Distribution by Age Group",
+    x = "Age Group",
+    y = "Visual Acuity (VA)"
+  ) +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
