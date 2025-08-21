@@ -1,5 +1,5 @@
 ---
-title: "Exploring Age-related Macular Degeneration Patient Characteristics (Moorfields Eye Hospital)"
+title: "Exploring neovascular Age-related Macular Degeneration (nAMD) Patient Characteristics (Moorfields Eye Hospital)"
 author: "Anne-Marie Sharp"
 date: "`r Sys.Date()`"
 output: html_document
@@ -60,7 +60,7 @@ unique_by_sex <- amd2_clean %>%
 ggplot(unique_by_sex, aes(x = sex, y = unique_patient_id, fill=sex)) + 
   geom_col() +
   labs (
-    title = "Sex Distribution of Age-related Macular Degeneration Patients",
+    title = "Sex Distribution of nAMD Patients",
     x = "Sex",
     y = "Number of Patients"
   ) +
@@ -96,7 +96,7 @@ distinct_age %>%
   ggplot(aes(x = age_group, y = total_patients)) +
   geom_col() +
   labs(
-     title = "Age Group Distribution of Age-related Macular Degeneration Patients",
+     title = "Age Group Distribution of nAMD Patients",
     x = "Age Group", y = "Number of Patients") +
   theme_classic()
 ```
